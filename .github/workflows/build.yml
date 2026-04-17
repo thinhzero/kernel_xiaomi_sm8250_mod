@@ -12,6 +12,7 @@ on:
           - psyche
           - umi
           - munch
+          - thyme
           - lmi
           - cmi
           - cas
