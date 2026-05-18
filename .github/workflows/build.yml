@@ -69,6 +69,14 @@ jobs:
         tar -zxvf Clang-15.0.7-20251111.tar.gz
         cd $GITHUB_WORKSPACE
 
+    - name: Setup SukiSU-Ultra
+      if: github.event.inputs.include_ksu == 'true'
+      run: |
+        cd $GITHUB_WORKSPACE
+        # Tải source SukiSU-Ultra vào thư mục kernel
+        curl -LSs "https://raw.githubusercontent.com/SukiSU-Ultra/SukiSU-Ultra/main/kernel/setup.sh" | bash -
+
+
     - name: Build kernel
       run: |
         if [ "${{ github.event.inputs.include_ksu }}" = "true" ]; then
