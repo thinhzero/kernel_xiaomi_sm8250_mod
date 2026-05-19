@@ -85,7 +85,7 @@ clang --version
 KSU_ZIP_STR=NoKernelSU
 if [ "$2" == "ksu" ]; then
     KSU_ENABLE=1
-    KSU_ZIP_STR=SukiSU-SUSFS
+    KSU_ZIP_STR=ReSukiSU-SUSFS
 else
     KSU_ENABLE=0
 fi
@@ -111,7 +111,7 @@ git clone https://github.com/liyafe1997/AnyKernel3 -b kona --single-branch --dep
 
 # Add date to local version
 local_version_str="-perf"
-local_version_date_str="-MaiAnh-$(date +%Y%m%d)-${GIT_COMMIT_ID}-perf"
+local_version_date_str="-thinh2701p-$(date +%Y%m%d)-${GIT_COMMIT_ID}-perf"
 
 sed -i "s/${local_version_str}/${local_version_date_str}/g" arch/arm64/configs/${TARGET_DEVICE}_defconfig
 
