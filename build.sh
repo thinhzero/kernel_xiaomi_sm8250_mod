@@ -5,10 +5,7 @@
 # Ensure the script exits on error
 set -e
 
-if [ -d "/run/media/tx/Game/Kernel/proton-clang/bin" ]; then
-    TOOLCHAIN_PATH="/run/media/tx/Game/Kernel/proton-clang/bin"
-else
-    TOOLCHAIN_PATH=$HOME/zyc-clang/bin
+TOOLCHAIN_PATH=$HOME/zyc-clang/bin
 fi
 GIT_COMMIT_ID=$(git rev-parse --short=8 HEAD)
 TARGET_DEVICE=$1
