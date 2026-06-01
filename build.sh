@@ -5,7 +5,11 @@
 # Ensure the script exits on error
 set -e
 
-TOOLCHAIN_PATH=$HOME/zyc-clang/bin
+if [ -d "/run/media/tx/Game/Kernel/proton-clang/bin" ]; then
+    TOOLCHAIN_PATH="/run/media/tx/Game/Kernel/proton-clang/bin"
+else
+    TOOLCHAIN_PATH=$HOME/zyc-clang/bin
+fi
 GIT_COMMIT_ID=$(git rev-parse --short=8 HEAD)
 TARGET_DEVICE=$1
 
@@ -55,16 +59,29 @@ export PATH="/usr/lib/ccache:$PATH"
 echo "CCACHE_DIR: [$CCACHE_DIR]"
 
 
-MAKE_ARGS="ARCH=arm64 SUBARCH=arm64 O=out CC=clang CROSS_COMPILE=aarch64-linux-gnu- CROSS_COMPILE_ARM32=arm-linux-gnueabi- CROSS_COMPILE_COMPAT=arm-linux-gnueabi- CLANG_TRIPLE=aarch64-linux-gnu-"
+MAKE_ARGS=(
+    ARCH=arm64
+    SUBARCH=arm64
+    O=out
+    CC=clang
+    CROSS_COMPILE=aarch64-linux-gnu-
+    CROSS_COMPILE_ARM32=arm-linux-gnueabi-
+    CROSS_COMPILE_COMPAT=arm-linux-gnueabi-
+    CLANG_TRIPLE=aarch64-linux-gnu-
+    HOSTCC="/usr/bin/clang -B/usr/bin"
+    HOSTCXX="/usr/bin/clang++ -B/usr/bin"
+    HOSTLD="/usr/bin/ld.lld -B/usr/bin"
+    HOSTLDFLAGS="-fuse-ld=lld"
+)
 
 
 if [ "$1" == "j1" ]; then
-    make $MAKE_ARGS -j1
+    make "${MAKE_ARGS[@]}" -j1
     exit
 fi
 
 if [ "$1" == "continue" ]; then
-    make $MAKE_ARGS -j$(nproc)
+    make "${MAKE_ARGS[@]}" -j$(nproc)
     exit
 fi
 
@@ -108,6 +125,7 @@ rm -rf anykernel/
 
 echo "Clone AnyKernel3 for packing kernel (repo: https://github.com/liyafe1997/AnyKernel3)"
 git clone https://github.com/liyafe1997/AnyKernel3 -b kona --single-branch --depth=1 anykernel
+sed -i 's/device.name5=lmi/device.name5=lmi\ndevice.name6=thyme/g' anykernel/anykernel.sh
 
 # Add date to local version
 local_version_str="-perf"
@@ -176,16 +194,16 @@ sed -i 's/\/\/39 01 00 00 00 00 03 51 07 FF/39 01 00 00 00 00 03 51 07 FF/g' ${d
 sed -i 's/\/\/39 01 00 00 00 00 03 51 0F FF/39 01 00 00 00 00 03 51 0F FF/g' ${dts_source}/dsi-panel-j1u-42-02-0b-dsc-cmd.dtsi
 sed -i 's/\/\/39 01 00 00 00 00 03 51 0F FF/39 01 00 00 00 00 03 51 0F FF/g' ${dts_source}/dsi-panel-j2-42-02-0b-dsc-cmd.dtsi
 sed -i 's/\/\/39 01 00 00 00 00 03 51 0F FF/39 01 00 00 00 00 03 51 0F FF/g' ${dts_source}/dsi-panel-j2-p1-42-02-0b-dsc-cmd.dtsi
-sed -i 's/\/\/39 01 00 00 00 00 05 51 07 FF 00 00/39 01 00 00 00 00 05 51 07 FF 00 00/g' ${dts_source}/dsi-panel-j1s-42-02-0a-dsc-cmd.dtsi
-sed -i 's/\/\/39 01 00 00 00 00 05 51 07 FF 00 00/39 01 00 00 00 00 05 51 07 FF 00 00/g' ${dts_source}/dsi-panel-j1s-42-02-0a-mp-dsc-cmd.dtsi
-sed -i 's/\/\/39 01 00 00 00 00 05 51 07 FF 00 00/39 01 00 00 00 00 05 51 07 FF 00 00/g' ${dts_source}/dsi-panel-j2-mp-42-02-0b-dsc-cmd.dtsi
-sed -i 's/\/\/39 01 00 00 00 00 05 51 07 FF 00 00/39 01 00 00 00 00 05 51 07 FF 00 00/g' ${dts_source}/dsi-panel-j2-p2-1-42-02-0b-dsc-cmd.dtsi
-sed -i 's/\/\/39 01 00 00 00 00 05 51 07 FF 00 00/39 01 00 00 00 00 05 51 07 FF 00 00/g' ${dts_source}/dsi-panel-j2s-mp-42-02-0a-dsc-cmd.dtsi
+sed -i 's/\/\/39 01 00 00 05 51 07 FF 00 00/39 01 00 00 05 51 07 FF 00 00/g' ${dts_source}/dsi-panel-j1s-42-02-0a-dsc-cmd.dtsi
+sed -i 's/\/\/39 01 00 00 05 51 07 FF 00 00/39 01 00 00 05 51 07 FF 00 00/g' ${dts_source}/dsi-panel-j1s-42-02-0a-mp-dsc-cmd.dtsi
+sed -i 's/\/\/39 01 00 00 05 51 07 FF 00 00/39 01 00 00 05 51 07 FF 00 00/g' ${dts_source}/dsi-panel-j2-mp-42-02-0b-dsc-cmd.dtsi
+sed -i 's/\/\/39 01 00 00 05 51 07 FF 00 00/39 01 00 00 05 51 07 FF 00 00/g' ${dts_source}/dsi-panel-j2-p2-1-42-02-0b-dsc-cmd.dtsi
+sed -i 's/\/\/39 01 00 00 05 51 07 FF 00 00/39 01 00 00 05 51 07 FF 00 00/g' ${dts_source}/dsi-panel-j2s-mp-42-02-0a-dsc-cmd.dtsi
 sed -i 's/\/\/39 01 00 00 01 00 03 51 03 FF/39 01 00 00 01 00 03 51 03 FF/g' ${dts_source}/dsi-panel-j11-38-08-0a-fhd-cmd.dtsi
 sed -i 's/\/\/39 01 00 00 11 00 03 51 03 FF/39 01 00 00 11 00 03 51 03 FF/g' ${dts_source}/dsi-panel-j2-p2-1-38-0c-0a-dsc-cmd.dtsi
 
 
-make $MAKE_ARGS ${TARGET_DEVICE}_defconfig
+make "${MAKE_ARGS[@]}" ${TARGET_DEVICE}_defconfig
 
 if [ $KSU_ENABLE -eq 1 ]; then
     scripts/config --file out/.config \
@@ -236,7 +254,7 @@ scripts/config --file out/.config \
     -e MI_RECLAIM \
     -e RTMM \
 
-make $MAKE_ARGS -j$(nproc)
+make "${MAKE_ARGS[@]}" -j$(nproc)
 
 
 
@@ -269,8 +287,8 @@ mkdir -p anykernel/kernels/
     #cd -
 #fi
 
-#cp out/arch/arm64/boot/Image anykernel/kernels/
-#cp out/arch/arm64/boot/dtb anykernel/kernels/
+cp out/arch/arm64/boot/Image anykernel/kernels/
+cp out/arch/arm64/boot/dtb anykernel/kernels/
 
 echo "Build for MIUI finished."
 
