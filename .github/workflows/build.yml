@@ -30,19 +30,15 @@ on:
         options:
           - 'true'
           - 'false'
-      os_option:
-        description: 'Build OS target (miui, aosp, both)'
-        required: true
-        default: 'both'
-        type: choice
-        options:
-          - miui
-          - aosp
-          - both
+
 
 jobs:
   build:
     runs-on: ubuntu-22.04
+    strategy:
+      fail-fast: false
+      matrix:
+        os_target: [miui, aosp]
 
     steps:
     - name: Checkout source
@@ -85,9 +81,9 @@ jobs:
         TG_CHAT_ID: ${{ secrets.TG_CHAT_ID }}
       run: |
         if [ "${{ github.event.inputs.include_ksu }}" = "true" ]; then
-          bash build.sh ${{ github.event.inputs.device }} ksu ${{ github.event.inputs.os_option }}
+          bash build.sh ${{ github.event.inputs.device }} ksu ${{ matrix.os_target }}
         else
-          bash build.sh ${{ github.event.inputs.device }} nksu ${{ github.event.inputs.os_option }}
+          bash build.sh ${{ github.event.inputs.device }} nksu ${{ matrix.os_target }}
         fi
 
     - name: Show ccache stats
@@ -96,18 +92,22 @@ jobs:
     - name: Upload build artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: ${{ github.event.inputs.device }}${{ github.event.inputs.include_ksu == 'true' && '-ksu' || '' }}-kernel
+        name: zips-${{ matrix.os_target }}
         path: |
           *.zip
-          out/arch/arm64/boot/Image
-          out/arch/arm64/boot/dtb
 
-    - name: Get Date and SHA
-      id: date_vars
+  release:
+    runs-on: ubuntu-22.04
+    needs: build
+    steps:
+    - name: Download all artifacts
+      uses: actions/download-artifact@v4
+      with:
+        path: ./release_zips
+
+    - name: Move all zips to root
       run: |
-        echo "date=$(TZ='Asia/Ho_Chi_Minh' date +'%Y%m%d')" >> $GITHUB_OUTPUT
-        echo "display_date=$(TZ='Asia/Ho_Chi_Minh' date +'%d/%m/%Y')" >> $GITHUB_OUTPUT
-        echo "sha=$(echo $GITHUB_SHA | cut -c1-7)" >> $GITHUB_OUTPUT
+        find ./release_zips -type f -name "*.zip" -exec mv {} ./ \;
 
     - name: Download Manager APKs
       env:
