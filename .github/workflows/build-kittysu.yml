@@ -9,7 +9,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        branch: [main, dev]
+        branch: [main, managerfix]
 
     steps:
     - name: Set up JDK 21
@@ -69,11 +69,11 @@ jobs:
         DATE=$(TZ='Asia/Ho_Chi_Minh' date +'%d/%m/%Y')
         echo "date=$DATE" >> $GITHUB_OUTPUT
         
-        # Lấy version từ nhánh main (nếu có), nếu không lấy từ nhánh dev
+        # Lấy version từ nhánh main (nếu có), nếu không lấy từ nhánh managerfix
         if [ -f "./release_artifacts/version_main.txt" ]; then
           VERSION=$(cat ./release_artifacts/version_main.txt)
-        elif [ -f "./release_artifacts/version_dev.txt" ]; then
-          VERSION=$(cat ./release_artifacts/version_dev.txt)
+        elif [ -f "./release_artifacts/version_managerfix.txt" ]; then
+          VERSION=$(cat ./release_artifacts/version_managerfix.txt)
         else
           VERSION=$(date +'%Y%m%d_%H%M')
         fi
@@ -84,7 +84,7 @@ jobs:
       with:
         tag_name: kittysu-${{ steps.vars.outputs.version }}
         name: "KittySU ${{ steps.vars.outputs.version }} (${{ steps.vars.outputs.date }})"
-        body: "Automated KittySU build for main and dev branches."
+        body: "Automated KittySU build for main and managerfix branches."
         draft: false
         prerelease: false
         files: ./release_artifacts/*.apk

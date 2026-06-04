@@ -23,7 +23,7 @@ dts_source=arch/arm64/boot/dts/vendor/qcom
 
 # Kernel local version string (UTC+7, ~23 chars — well under 64-char limit)
 local_version_str="-perf"
-local_version_date_str="-thinhVN-$(TZ='Asia/Ho_Chi_Minh' date +%Y%m%d)-$(TZ='Asia/Ho_Chi_Minh' date +%H%M)-${GIT_COMMIT_ID}-perf++"
+local_version_date_str="-Rezzchan-$(TZ='Asia/Ho_Chi_Minh' date +%Y%m%d)-$(TZ='Asia/Ho_Chi_Minh' date +%H%M)-${GIT_COMMIT_ID}-perf++"
 
 # --- CẤU HÌNH TELEGRAM BOT TỪ .ENV ---
 ENV_FILE=".env"
@@ -241,7 +241,7 @@ clang --version
 KSU_ZIP_STR=NoKernelSU
 if [ "$2" == "ksu" ]; then
     KSU_ENABLE=1
-    KSU_ZIP_STR=ReSukiSU-SUSFS
+    KSU_ZIP_STR=SukiSU
 else
     KSU_ENABLE=0
 fi
@@ -360,16 +360,7 @@ scripts/config --file out/.config --set-str LOCALVERSION "$local_version_date_st
 if [ $KSU_ENABLE -eq 1 ]; then
     scripts/config --file out/.config \
         -e KSU \
-        -e KSU_SUSFS \
-        -e KSU_SUSFS_SUS_PATH \
-        -e KSU_SUSFS_SUS_MOUNT \
-        -e KSU_SUSFS_SUS_KSTAT \
-        -e KSU_SUSFS_SPOOF_UNAME \
-        -e KSU_SUSFS_ENABLE_LOG \
-        -e KSU_SUSFS_HIDE_KSU_SUSFS_SYMBOLS \
-        -e KSU_SUSFS_SPOOF_CMDLINE_OR_BOOTCONFIG \
-        -e KSU_SUSFS_OPEN_REDIRECT \
-        -e KSU_SUSFS_SUS_MAP \
+        -d KSU_SUSFS \
         -e THREAD_INFO_IN_TASK \
         -d KPM
 else
@@ -463,16 +454,7 @@ scripts/config --file out/.config --set-str LOCALVERSION "$local_version_date_st
 if [ $KSU_ENABLE -eq 1 ]; then
     scripts/config --file out/.config \
         -e KSU \
-        -e KSU_SUSFS \
-        -e KSU_SUSFS_SUS_PATH \
-        -e KSU_SUSFS_SUS_MOUNT \
-        -e KSU_SUSFS_SUS_KSTAT \
-        -e KSU_SUSFS_SPOOF_UNAME \
-        -e KSU_SUSFS_ENABLE_LOG \
-        -e KSU_SUSFS_HIDE_KSU_SUSFS_SYMBOLS \
-        -e KSU_SUSFS_SPOOF_CMDLINE_OR_BOOTCONFIG \
-        -e KSU_SUSFS_OPEN_REDIRECT \
-        -e KSU_SUSFS_SUS_MAP \
+        -d KSU_SUSFS \
         -e THREAD_INFO_IN_TASK \
         -e KPM
 else
