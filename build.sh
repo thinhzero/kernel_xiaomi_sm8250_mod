@@ -265,8 +265,8 @@ START_MSG="${START_MSG}▪️ *Toolchain:* \`ZYC-Clang\`"
     start_telegram_poller
 
 if [ $KSU_ENABLE -eq 1 ]; then
-    echo "KSU is enabled"
-    rm -rf KernelSU
+    echo "Downloading and setting up KittiSU..."
+    git config --global --add safe.directory "*"
     KSU_SETUP_SCRIPT=$(mktemp)
     curl -LSs "https://raw.githubusercontent.com/terebiko/KittiSU/main/kernel/setup.sh" \
         -o "$KSU_SETUP_SCRIPT"
@@ -383,6 +383,9 @@ scripts/config --file out/.config --set-str LOCALVERSION "$local_version_date_st
 if [ $KSU_ENABLE -eq 1 ]; then
     scripts/config --file out/.config \
         -e KSU \
+        -e KPROBES \
+        -e KPROBE_EVENTS \
+        -e HAVE_KPROBES \
         -e KSU_SUSFS \
         -e KSU_SUSFS_SUS_PATH \
         -e KSU_SUSFS_SUS_MOUNT \
@@ -489,6 +492,9 @@ scripts/config --file out/.config --set-str LOCALVERSION "$local_version_date_st
 if [ $KSU_ENABLE -eq 1 ]; then
     scripts/config --file out/.config \
         -e KSU \
+        -e KPROBES \
+        -e KPROBE_EVENTS \
+        -e HAVE_KPROBES \
         -d KSU_SUSFS \
         -d KSU_SUSFS_SUS_PATH \
         -d KSU_SUSFS_SUS_MOUNT \
