@@ -116,3 +116,19 @@ jobs:
         body: "Automated kernel build for commit ${{ github.sha }}"
         files: |
           ./*.zip
+
+    - name: Upload to Telegram
+      env:
+        TG_TOKEN: ${{ secrets.TG_TOKEN }}
+        CHANNEL_TG_RELEASE_ID: ${{ secrets.CHANNEL_TG_RELEASE_ID }}
+      run: |
+        if [ -n "$TG_TOKEN" ] && [ -n "$CHANNEL_TG_RELEASE_ID" ]; then
+          for zip_file in ./*.zip; do
+            if [ -f "$zip_file" ]; then
+              echo "Uploading $zip_file to Telegram..."
+              curl -s -F chat_id="$CHANNEL_TG_RELEASE_ID" -F document=@"$zip_file" -F caption="New bundle available: $zip_file" https://api.telegram.org/bot${TG_TOKEN}/sendDocument
+            fi
+          done
+        else
+          echo "Telegram credentials not provided. Skipping upload."
+        fi

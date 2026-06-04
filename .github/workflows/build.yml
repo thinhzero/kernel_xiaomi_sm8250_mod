@@ -100,25 +100,11 @@ jobs:
         echo "display_date=$(TZ='Asia/Ho_Chi_Minh' date +'%d/%m/%Y')" >> $GITHUB_OUTPUT
         echo "sha=$(echo $GITHUB_SHA | cut -c1-7)" >> $GITHUB_OUTPUT
 
-    - name: Download Manager APKs and Bundle
+    - name: Download Manager APKs
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
-        mkdir -p manager_apks
-        gh release download Manager -p '*.apk' -D ./manager_apks || echo "No manager APKs found"
-        
-        device="${{ github.event.inputs.device }}"
-        bundle_name="${device}-${{ steps.date_vars.outputs.sha }}-${{ steps.date_vars.outputs.date }}.zip"
-        
-        mkdir -p bundle_tmp
-        cp ./manager_apks/*.apk bundle_tmp/ 2>/dev/null || true
-        cp *.zip bundle_tmp/ 2>/dev/null || true
-        
-        cd bundle_tmp
-        zip -r9 "../${bundle_name}" .
-        cd ..
-        
-        rm -rf bundle_tmp
+        gh release download Manager -p '*.apk' || echo "No manager APKs found"
 
     - name: Upload to Release
       uses: softprops/action-gh-release@v2
@@ -128,4 +114,21 @@ jobs:
         draft: false
         prerelease: false
         files: |
-          ${{ github.event.inputs.device }}-*.zip
+          *.zip
+          *.apk
+
+    - name: Upload to Telegram
+      env:
+        TG_TOKEN: ${{ secrets.TG_TOKEN }}
+        CHANNEL_TG_RELEASE_ID: ${{ secrets.CHANNEL_TG_RELEASE_ID }}
+      run: |
+        if [ -n "$TG_TOKEN" ] && [ -n "$CHANNEL_TG_RELEASE_ID" ]; then
+          for zip_file in *.zip; do
+            if [ -f "$zip_file" ]; then
+              echo "Uploading $zip_file to Telegram..."
+              curl -s -F chat_id="$CHANNEL_TG_RELEASE_ID" -F document=@"$zip_file" -F caption="New kernel build available: $zip_file" https://api.telegram.org/bot${TG_TOKEN}/sendDocument
+            fi
+          done
+        else
+          echo "Telegram credentials not provided. Skipping upload."
+        fi
