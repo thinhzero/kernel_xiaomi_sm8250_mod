@@ -93,11 +93,32 @@ jobs:
           out/arch/arm64/boot/Image
           out/arch/arm64/boot/dtb
 
-    - name: Get Date
+    - name: Get Date and SHA
       id: date_vars
       run: |
         echo "date=$(TZ='Asia/Ho_Chi_Minh' date +'%Y%m%d')" >> $GITHUB_OUTPUT
         echo "display_date=$(TZ='Asia/Ho_Chi_Minh' date +'%d/%m/%Y')" >> $GITHUB_OUTPUT
+        echo "sha=$(echo $GITHUB_SHA | cut -c1-7)" >> $GITHUB_OUTPUT
+
+    - name: Download Manager APKs and Bundle
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        mkdir -p manager_apks
+        gh release download Manager -p '*.apk' -D ./manager_apks || echo "No manager APKs found"
+        
+        device="${{ github.event.inputs.device }}"
+        bundle_name="${device}-${{ steps.date_vars.outputs.sha }}-${{ steps.date_vars.outputs.date }}.zip"
+        
+        mkdir -p bundle_tmp
+        cp ./manager_apks/*.apk bundle_tmp/ 2>/dev/null || true
+        cp *.zip bundle_tmp/ 2>/dev/null || true
+        
+        cd bundle_tmp
+        zip -r9 "../${bundle_name}" .
+        cd ..
+        
+        rm -rf bundle_tmp
 
     - name: Upload to Release
       uses: softprops/action-gh-release@v2
@@ -107,8 +128,4 @@ jobs:
         draft: false
         prerelease: false
         files: |
-          *.zip
-          *.apk
-          KernelSU/*.apk
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ${{ github.event.inputs.device }}-*.zip

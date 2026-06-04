@@ -82,6 +82,32 @@ jobs:
         echo "display_date=$(TZ='Asia/Ho_Chi_Minh' date +'%d/%m/%Y')" >> $GITHUB_OUTPUT
         echo "sha=$(echo $GITHUB_SHA | cut -c1-7)" >> $GITHUB_OUTPUT
 
+    - name: Download Manager APKs and Bundle per Device
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        # Tải file APK từ bản release Manager
+        mkdir -p manager_apks
+        gh release download Manager -p '*.apk' -D ./manager_apks || echo "No manager APKs found or release missing."
+        
+        # Đóng gói zip cho từng thiết bị
+        for dir in ./release_zips/zips-*; do
+          if [ -d "$dir" ]; then
+            device=$(basename "$dir" | sed 's/zips-//')
+            bundle_name="${device}-${{ steps.vars.outputs.sha }}-${{ steps.vars.outputs.date }}.zip"
+            
+            mkdir -p bundle_tmp
+            cp ./manager_apks/*.apk bundle_tmp/ 2>/dev/null || true
+            cp "$dir"/*.zip bundle_tmp/ 2>/dev/null || true
+            
+            cd bundle_tmp
+            zip -r9 "../${bundle_name}" .
+            cd ..
+            
+            rm -rf bundle_tmp
+          fi
+        done
+
     - name: Create GitHub Release
       uses: softprops/action-gh-release@v2
       with:
@@ -89,7 +115,4 @@ jobs:
         name: "Kernel 4.19"
         body: "Automated kernel build for commit ${{ github.sha }}"
         files: |
-          ./release_zips/**/*.zip
-          ./release_zips/**/*.apk
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ./*.zip
