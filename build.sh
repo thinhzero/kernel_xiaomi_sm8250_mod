@@ -266,6 +266,7 @@ START_MSG="${START_MSG}▪️ *Toolchain:* \`ZYC-Clang\`"
 
 if [ $KSU_ENABLE -eq 1 ]; then
     echo "Downloading and setting up KittiSU..."
+    rm -rf KernelSU
     git config --global --add safe.directory "*"
     KSU_SETUP_SCRIPT=$(mktemp)
     curl -LSs "https://raw.githubusercontent.com/terebiko/KittiSU/main/kernel/setup.sh" \
