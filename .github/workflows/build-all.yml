@@ -85,8 +85,8 @@ jobs:
     - name: Create GitHub Release
       uses: softprops/action-gh-release@v2
       with:
-        tag_name: build-${{ steps.vars.outputs.date }}-${{ steps.vars.outputs.sha }}
-        name: "Kernel 4.19 ${{ steps.vars.outputs.display_date }}"
+        tag_name: Kernel
+        name: "Kernel 4.19"
         body: "Automated kernel build for commit ${{ github.sha }}"
         files: |
           ./release_zips/**/*.zip

@@ -82,9 +82,9 @@ jobs:
     - name: Create GitHub Release
       uses: softprops/action-gh-release@v2
       with:
-        tag_name: kittysu-${{ steps.vars.outputs.version }}
-        name: "KittySU ${{ steps.vars.outputs.version }} (${{ steps.vars.outputs.date }})"
-        body: "Automated KittySU build for main and managerfix branches."
+        tag_name: Manager
+        name: "KittiSU Manager"
+        body: "Automated KittiSU build for main and managerfix branches."
         draft: false
         prerelease: false
         files: ./release_artifacts/*.apk
