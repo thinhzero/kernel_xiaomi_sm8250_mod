@@ -142,7 +142,7 @@ jobs:
           exit 0
         fi
         
-        CAPTION="🔥 <b>New kernel build available!</b>"
+        CAPTION="🔥 <b>New kernel build available for ${{ github.event.inputs.device }}!</b>\n\n#${{ github.event.inputs.device }}"
         CAPTION_JSON=$(echo "$CAPTION" | sed 's/"/\\"/g' | sed ':a;N;$!ba;s/\n/\\n/g')
         
         for (( i=0; i<${#files[@]}; i+=10 )); do

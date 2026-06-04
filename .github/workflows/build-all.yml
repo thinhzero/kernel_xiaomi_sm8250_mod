@@ -143,7 +143,7 @@ jobs:
             continue
           fi
           
-          CAPTION="🔥 <b>New kernel build available for ${device}!</b>"
+          CAPTION="🔥 <b>New kernel build available for ${device}!</b>\n\n#${device}"
           CAPTION_JSON=$(echo "$CAPTION" | sed 's/"/\\"/g' | sed ':a;N;$!ba;s/\n/\\n/g')
           
           for (( i=0; i<${#files[@]}; i+=10 )); do
