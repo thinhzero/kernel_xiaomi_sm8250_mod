@@ -69,15 +69,11 @@ jobs:
         tar -zxvf Clang-15.0.7-20251111.tar.gz
         cd $GITHUB_WORKSPACE
 
-    - name: Setup SukiSU-Ultra
-      if: github.event.inputs.include_ksu == 'true'
-      run: |
-        cd $GITHUB_WORKSPACE
-        # Tải source SukiSU-Ultra vào thư mục kernel
-        curl -LSs "https://raw.githubusercontent.com/SukiSU-Ultra/SukiSU-Ultra/main/kernel/setup.sh" | bash -
-
 
     - name: Build kernel
+      env:
+        TG_TOKEN: ${{ secrets.TG_TOKEN }}
+        TG_CHAT_ID: ${{ secrets.TG_CHAT_ID }}
       run: |
         if [ "${{ github.event.inputs.include_ksu }}" = "true" ]; then
           bash build.sh ${{ github.event.inputs.device }} ksu
@@ -96,3 +92,17 @@ jobs:
           *.zip
           out/arch/arm64/boot/Image
           out/arch/arm64/boot/dtb
+
+    - name: Upload to Release
+      uses: softprops/action-gh-release@v2
+      with:
+        tag_name: build-${{ github.event.inputs.device }}-${{ github.run_id }}
+        name: Release ${{ github.event.inputs.device }} - ${{ github.run_id }}
+        draft: false
+        prerelease: false
+        files: |
+          *.zip
+          *.apk
+          KernelSU/*.apk
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

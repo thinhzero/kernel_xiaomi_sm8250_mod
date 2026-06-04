@@ -31,10 +31,16 @@ jobs:
         cd $GITHUB_WORKSPACE
 
     - name: Build kernel for ${{ matrix.device }} (No KSU)
+      env:
+        TG_TOKEN: ${{ secrets.TG_TOKEN }}
+        TG_CHAT_ID: ${{ secrets.TG_CHAT_ID }}
       run: |
         bash build.sh ${{ matrix.device }}
 
     - name: Build kernel for ${{ matrix.device }} (With KSU)
+      env:
+        TG_TOKEN: ${{ secrets.TG_TOKEN }}
+        TG_CHAT_ID: ${{ secrets.TG_CHAT_ID }}
       run: |
         bash build.sh ${{ matrix.device }} ksu
 
@@ -45,6 +51,8 @@ jobs:
         path: |
           Kernel_MIUI_${{ matrix.device }}*.zip
           Kernel_AOSP_${{ matrix.device }}*.zip
+          *.apk
+          KernelSU/*.apk
 
   release:
     runs-on: ubuntu-22.04
@@ -67,6 +75,8 @@ jobs:
         tag_name: build-${{ steps.vars.outputs.date }}-${{ steps.vars.outputs.sha }}
         name: "Kernel Build ${{ steps.vars.outputs.date }}-${{ steps.vars.outputs.sha }}"
         body: "Automated kernel build for commit ${{ github.sha }}"
-        files: ./release_zips/**/*.zip
+        files: |
+          ./release_zips/**/*.zip
+          ./release_zips/**/*.apk
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
