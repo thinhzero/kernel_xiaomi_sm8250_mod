@@ -21,6 +21,7 @@ jobs:
       matrix:
         device: [thyme, psyche, umi, munch, lmi, cmi, cas, apollo, alioth, elish, enuma, dagu, pipa]
         os_target: [miui, aosp]
+        ksu_target: [ksu, nksu]
 
     steps:
     - name: Checkout source
@@ -41,26 +42,18 @@ jobs:
         tar -zxvf Clang-15.0.7-20251111.tar.gz
         cd $GITHUB_WORKSPACE
 
-    - name: Build kernel for ${{ matrix.device }} (No KSU)
-      if: ${{ github.event.inputs.ksu_option == 'none' || github.event.inputs.ksu_option == 'both' }}
+    - name: Build kernel for ${{ matrix.device }} (${{ matrix.ksu_target }})
+      if: ${{ github.event.inputs.ksu_option == 'both' || (github.event.inputs.ksu_option == 'ksu' && matrix.ksu_target == 'ksu') || (github.event.inputs.ksu_option == 'none' && matrix.ksu_target == 'nksu') }}
       env:
         TG_TOKEN: ${{ secrets.TG_TOKEN }}
         TG_CHAT_ID: ${{ secrets.TG_CHAT_ID }}
       run: |
-        bash build.sh ${{ matrix.device }} nksu ${{ matrix.os_target }}
-
-    - name: Build kernel for ${{ matrix.device }} (With KSU)
-      if: ${{ github.event.inputs.ksu_option == 'ksu' || github.event.inputs.ksu_option == 'both' }}
-      env:
-        TG_TOKEN: ${{ secrets.TG_TOKEN }}
-        TG_CHAT_ID: ${{ secrets.TG_CHAT_ID }}
-      run: |
-        bash build.sh ${{ matrix.device }} ksu ${{ matrix.os_target }}
+        bash build.sh ${{ matrix.device }} ${{ matrix.ksu_target }} ${{ matrix.os_target }}
 
     - name: Upload zips for ${{ matrix.device }}
       uses: actions/upload-artifact@v4
       with:
-        name: zips-${{ matrix.device }}-${{ matrix.os_target }}
+        name: zips-${{ matrix.device }}-${{ matrix.os_target }}-${{ matrix.ksu_target }}
         path: |
           Kernel_MIUI_${{ matrix.device }}*.zip
           Kernel_AOSP_${{ matrix.device }}*.zip
@@ -100,13 +93,11 @@ jobs:
           
           cp ./manager_apks/*.apk bundle_tmp/ 2>/dev/null || true
           
-          if [ -d "./release_zips/zips-${device}-miui" ]; then
-            cp ./release_zips/zips-${device}-miui/*.zip bundle_tmp/ 2>/dev/null && has_content=1 || true
-          fi
-          
-          if [ -d "./release_zips/zips-${device}-aosp" ]; then
-            cp ./release_zips/zips-${device}-aosp/*.zip bundle_tmp/ 2>/dev/null && has_content=1 || true
-          fi
+          for d in ./release_zips/zips-${device}-*; do
+            if [ -d "$d" ]; then
+              cp "$d"/*.zip bundle_tmp/ 2>/dev/null && has_content=1 || true
+            fi
+          done
           
           if [ "$has_content" -eq 1 ]; then
             cd bundle_tmp

@@ -22,14 +22,15 @@ on:
           - enuma
           - dagu
           - pipa
-      include_ksu:
-        description: '是否包含KSU'
+      ksu_option:
+        description: 'Build variant (none, ksu, both)'
         required: true
-        default: 'true'
+        default: 'both'
         type: choice
         options:
-          - 'true'
-          - 'false'
+          - none
+          - ksu
+          - both
 
 
 jobs:
@@ -39,6 +40,7 @@ jobs:
       fail-fast: false
       matrix:
         os_target: [miui, aosp]
+        ksu_target: [ksu, nksu]
 
     steps:
     - name: Checkout source
@@ -60,10 +62,10 @@ jobs:
       uses: actions/cache@v4
       with:
         path: ~/.cache/ccache_mikernel
-        key: ${{ runner.os }}-ccache-${{ github.event.inputs.device }}-${{ github.event.inputs.include_ksu }}-${{ env.SHORT_SHA }}
+        key: ${{ runner.os }}-ccache-${{ github.event.inputs.device }}-${{ matrix.os_target }}-${{ matrix.ksu_target }}-${{ env.SHORT_SHA }}
         restore-keys: |
-          ${{ runner.os }}-ccache-${{ github.event.inputs.device }}-${{ github.event.inputs.include_ksu }}-
-          ${{ runner.os }}-ccache-${{ github.event.inputs.device }}-
+          ${{ runner.os }}-ccache-${{ github.event.inputs.device }}-${{ matrix.os_target }}-${{ matrix.ksu_target }}-
+          ${{ runner.os }}-ccache-${{ github.event.inputs.device }}-${{ matrix.os_target }}-
           ${{ runner.os }}-ccache-
 
     - name: Setup zyc-clang toolchain
@@ -75,16 +77,13 @@ jobs:
         cd $GITHUB_WORKSPACE
 
 
-    - name: Build kernel
+    - name: Build kernel (${{ matrix.ksu_target }})
+      if: ${{ github.event.inputs.ksu_option == 'both' || (github.event.inputs.ksu_option == 'ksu' && matrix.ksu_target == 'ksu') || (github.event.inputs.ksu_option == 'none' && matrix.ksu_target == 'nksu') }}
       env:
         TG_TOKEN: ${{ secrets.TG_TOKEN }}
         TG_CHAT_ID: ${{ secrets.TG_CHAT_ID }}
       run: |
-        if [ "${{ github.event.inputs.include_ksu }}" = "true" ]; then
-          bash build.sh ${{ github.event.inputs.device }} ksu ${{ matrix.os_target }}
-        else
-          bash build.sh ${{ github.event.inputs.device }} nksu ${{ matrix.os_target }}
-        fi
+        bash build.sh ${{ github.event.inputs.device }} ${{ matrix.ksu_target }} ${{ matrix.os_target }}
 
     - name: Show ccache stats
       run: ccache -s
@@ -92,7 +91,7 @@ jobs:
     - name: Upload build artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: zips-${{ matrix.os_target }}
+        name: zips-${{ matrix.os_target }}-${{ matrix.ksu_target }}
         path: |
           *.zip
 
