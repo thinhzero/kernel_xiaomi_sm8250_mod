@@ -287,6 +287,14 @@ if [ $KSU_ENABLE -eq 1 ]; then
     sed -i 's/susfs_set_hide_sus_mnts_for_non_su_procs/susfs_set_hide_sus_mnts_for_all_procs/g' KernelSU/kernel/supercall/dispatch.c 2>/dev/null || true
     sed -i '/susfs_start_sdcard_monitor_fn/d' KernelSU/kernel/supercall/dispatch.c 2>/dev/null || true
     sed -i '/susfs_extra_works/d' KernelSU/kernel/feature/kernel_umount.c 2>/dev/null || true
+    
+    # [FIX] Fix pkg_observer.c for Linux 4.19 fsnotify_ops
+    echo "Patching KSU pkg_observer.c for kernel 4.19 compatibility..."
+    sed -i 's/static int ksu_handle_inode_event.*/static int ksu_handle_event(struct fsnotify_group *group, struct inode *inode, u32 mask, const void *data, int data_type, const unsigned char *file_name, u32 cookie, struct fsnotify_iter_info *iter_info)/g' KernelSU/kernel/manager/pkg_observer.c
+    sed -i 's/.*const struct qstr \*file_name, u32 cookie)//g' KernelSU/kernel/manager/pkg_observer.c
+    sed -i 's/file_name->len/strlen(file_name)/g' KernelSU/kernel/manager/pkg_observer.c
+    sed -i 's/file_name->name/file_name/g' KernelSU/kernel/manager/pkg_observer.c
+    sed -i 's/\.handle_inode_event = ksu_handle_inode_event,/\.handle_event = ksu_handle_event,/g' KernelSU/kernel/manager/pkg_observer.c
     echo "Bypassed."
 else
     echo "KSU is disabled"
