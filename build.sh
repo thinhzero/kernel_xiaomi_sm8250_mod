@@ -450,13 +450,96 @@ mv "$ZIP_FILENAME" ../
 cd ..
 
 echo "Done. The flashable zip is: [./$ZIP_FILENAME]"
+
+# ── Building for AOSP ─────────────────────────────────────────────────────────
+echo "Cleaning [out/] and building for AOSP..."
+rm -rf out/
+
+make "${MAKE_ARGS[@]}" "${TARGET_DEVICE}_defconfig"
+
+echo "Setting LOCALVERSION in out/.config..."
+scripts/config --file out/.config --set-str LOCALVERSION "$local_version_date_str"
+
+if [ $KSU_ENABLE -eq 1 ]; then
+    scripts/config --file out/.config \
+        -e KSU \
+        -e KSU_SUSFS \
+        -e KSU_SUSFS_SUS_PATH \
+        -e KSU_SUSFS_SUS_MOUNT \
+        -e KSU_SUSFS_SUS_KSTAT \
+        -e KSU_SUSFS_SPOOF_UNAME \
+        -e KSU_SUSFS_ENABLE_LOG \
+        -e KSU_SUSFS_HIDE_KSU_SUSFS_SYMBOLS \
+        -e KSU_SUSFS_SPOOF_CMDLINE_OR_BOOTCONFIG \
+        -e KSU_SUSFS_OPEN_REDIRECT \
+        -e KSU_SUSFS_SUS_MAP \
+        -e THREAD_INFO_IN_TASK \
+        -e KPM
+else
+    scripts/config --file out/.config -d KSU
+fi
+
+make "${MAKE_ARGS[@]}" -j"$(nproc)"
+
+if [ -f "out/arch/arm64/boot/Image" ]; then
+    echo "The file [out/arch/arm64/boot/Image] exists. AOSP Build successful."
+else
+    echo "The file [out/arch/arm64/boot/Image] does not exist. AOSP build failed."
+    exit 1
+fi
+
+echo "Generating [out/arch/arm64/boot/dtb]..."
+find out/arch/arm64/boot/dts -name '*.dtb' -exec cat {} + > out/arch/arm64/boot/dtb
+
+rm -rf anykernel/kernels/
+mkdir -p anykernel/kernels/
+
+# Patch for SukiSU KPM support. 
+if [ $KSU_ENABLE -eq 1 ]; then
+    cd out/arch/arm64/boot/
+    wget -q https://github.com/SukiSU-Ultra/SukiSU_KernelPatch_patch/releases/download/0.12.2/patch_linux
+    chmod +x patch_linux
+    ./patch_linux
+    rm Image
+    mv oImage Image
+    cd -
+fi
+
+cp out/arch/arm64/boot/Image anykernel/kernels/
+cp out/arch/arm64/boot/dtb anykernel/kernels/
+
+echo "Build for AOSP finished."
+
+# ── Packaging AOSP ────────────────────────────────────────────────────────────
+cd anykernel
+
+AOSP_ZIP_FILENAME=Kernel_AOSP_${TARGET_DEVICE}_${KSU_ZIP_STR}_$(TZ='Asia/Ho_Chi_Minh' date +'%Y%m%d_%H%M%S')_anykernel3_${GIT_COMMIT_ID}.zip
+
+zip -r9 "$AOSP_ZIP_FILENAME" . \
+    -x "*.git*" \
+    -x ".gitignore" \
+    -x "out/*" \
+    -x "*.zip"
+
+mv "$AOSP_ZIP_FILENAME" ../
+
+cd ..
+
+echo "Done. The flashable zip for AOSP is: [./$AOSP_ZIP_FILENAME]"
+
+# --- BÁO CÁO THÀNH CÔNG TỔNG ---
+END_TIME=$(date +%s)
+ELAPSED_SECS=$((END_TIME - SCRIPT_START_TIME))
+FORMATTED_TIME=$(printf "%02d:%02d:%02d" $((ELAPSED_SECS/3600)) $(((ELAPSED_SECS%3600)/60)) $((ELAPSED_SECS%60)))
+
 echo -e "${GREEN}⏱ Tổng thời gian chạy: ${FORMATTED_TIME}${NC}"
 
-FINISH_MSG="🎉 *Đã build xong Kernel MIUI!* 🥂%0A%0A"
+FINISH_MSG="🎉 *Đã build xong Kernel (MIUI & AOSP)!* 🥂%0A%0A"
 FINISH_MSG="${FINISH_MSG}▪️ *Device:* \`${TARGET_DEVICE}\`%0A"
 FINISH_MSG="${FINISH_MSG}▪️ *Variant:* \`${KSU_ZIP_STR}\`%0A"
-FINISH_MSG="${FINISH_MSG}⏱ *Thời gian build:* \`${FORMATTED_TIME}\`%0A"
-FINISH_MSG="${FINISH_MSG}📁 *Tên file ZIP:* \`${ZIP_FILENAME}\`"
+FINISH_MSG="${FINISH_MSG}⏱ *Thời gian:* \`${FORMATTED_TIME}\`%0A"
+FINISH_MSG="${FINISH_MSG}📁 *MIUI ZIP:* \`${ZIP_FILENAME}\`%0A"
+FINISH_MSG="${FINISH_MSG}📁 *AOSP ZIP:* \`${AOSP_ZIP_FILENAME}\`"
 
 send_telegram_msg "$FINISH_MSG"
 
