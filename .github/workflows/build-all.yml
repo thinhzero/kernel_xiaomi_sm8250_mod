@@ -12,6 +12,15 @@ on:
           - none
           - ksu
           - both
+      os_option:
+        description: 'Build OS target (miui, aosp, both)'
+        required: true
+        default: 'both'
+        type: choice
+        options:
+          - miui
+          - aosp
+          - both
 
 jobs:
   build:
@@ -46,7 +55,7 @@ jobs:
         TG_TOKEN: ${{ secrets.TG_TOKEN }}
         TG_CHAT_ID: ${{ secrets.TG_CHAT_ID }}
       run: |
-        bash build.sh ${{ matrix.device }}
+        bash build.sh ${{ matrix.device }} nksu ${{ github.event.inputs.os_option }}
 
     - name: Build kernel for ${{ matrix.device }} (With KSU)
       if: ${{ github.event.inputs.ksu_option == 'ksu' || github.event.inputs.ksu_option == 'both' }}
@@ -54,7 +63,7 @@ jobs:
         TG_TOKEN: ${{ secrets.TG_TOKEN }}
         TG_CHAT_ID: ${{ secrets.TG_CHAT_ID }}
       run: |
-        bash build.sh ${{ matrix.device }} ksu
+        bash build.sh ${{ matrix.device }} ksu ${{ github.event.inputs.os_option }}
 
     - name: Upload zips for ${{ matrix.device }}
       uses: actions/upload-artifact@v4

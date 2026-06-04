@@ -30,6 +30,15 @@ on:
         options:
           - 'true'
           - 'false'
+      os_option:
+        description: 'Build OS target (miui, aosp, both)'
+        required: true
+        default: 'both'
+        type: choice
+        options:
+          - miui
+          - aosp
+          - both
 
 jobs:
   build:
@@ -76,9 +85,9 @@ jobs:
         TG_CHAT_ID: ${{ secrets.TG_CHAT_ID }}
       run: |
         if [ "${{ github.event.inputs.include_ksu }}" = "true" ]; then
-          bash build.sh ${{ github.event.inputs.device }} ksu
+          bash build.sh ${{ github.event.inputs.device }} ksu ${{ github.event.inputs.os_option }}
         else
-          bash build.sh ${{ github.event.inputs.device }}
+          bash build.sh ${{ github.event.inputs.device }} nksu ${{ github.event.inputs.os_option }}
         fi
 
     - name: Show ccache stats

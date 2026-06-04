@@ -246,6 +246,14 @@ else
     KSU_ENABLE=0
 fi
 
+if [ "$3" == "aosp" ]; then
+    OS_TYPE="aosp"
+elif [ "$3" == "miui" ]; then
+    OS_TYPE="miui"
+else
+    OS_TYPE="both"
+fi
+
 echo "TARGET_DEVICE: $TARGET_DEVICE"
 
 # GỬI TIN NHẮN BẮT ĐẦU
@@ -295,6 +303,7 @@ sed -i 's/device.name5=lmi/device.name5=lmi\ndevice.name6=thyme/g' anykernel/any
 # No longer patching defconfig with sed. Will use scripts/config instead.
 
 # ── Building for MIUI ─────────────────────────────────────────────────────────
+if [ "$OS_TYPE" == "miui" ] || [ "$OS_TYPE" == "both" ]; then
 echo "Cleaning [out/] and building for MIUI..."
 rm -rf out/
 
@@ -451,7 +460,10 @@ cd ..
 
 echo "Done. The flashable zip is: [./$ZIP_FILENAME]"
 
+fi
+
 # ── Building for AOSP ─────────────────────────────────────────────────────────
+if [ "$OS_TYPE" == "aosp" ] || [ "$OS_TYPE" == "both" ]; then
 echo "Cleaning [out/] and building for AOSP..."
 rm -rf out/
 
@@ -527,6 +539,8 @@ cd ..
 
 echo "Done. The flashable zip for AOSP is: [./$AOSP_ZIP_FILENAME]"
 
+fi
+
 # --- BÁO CÁO THÀNH CÔNG TỔNG ---
 END_TIME=$(date +%s)
 ELAPSED_SECS=$((END_TIME - SCRIPT_START_TIME))
@@ -534,12 +548,24 @@ FORMATTED_TIME=$(printf "%02d:%02d:%02d" $((ELAPSED_SECS/3600)) $(((ELAPSED_SECS
 
 echo -e "${GREEN}⏱ Tổng thời gian chạy: ${FORMATTED_TIME}${NC}"
 
-FINISH_MSG="🎉 *Đã build xong Kernel (MIUI & AOSP)!* 🥂%0A%0A"
+if [ "$OS_TYPE" == "both" ]; then
+    OS_STR="MIUI & AOSP"
+elif [ "$OS_TYPE" == "miui" ]; then
+    OS_STR="MIUI"
+else
+    OS_STR="AOSP"
+fi
+FINISH_MSG="🎉 *Đã build xong Kernel (${OS_STR})!* 🥂%0A%0A"
 FINISH_MSG="${FINISH_MSG}▪️ *Device:* \`${TARGET_DEVICE}\`%0A"
 FINISH_MSG="${FINISH_MSG}▪️ *Variant:* \`${KSU_ZIP_STR}\`%0A"
 FINISH_MSG="${FINISH_MSG}⏱ *Thời gian:* \`${FORMATTED_TIME}\`%0A"
-FINISH_MSG="${FINISH_MSG}📁 *MIUI ZIP:* \`${ZIP_FILENAME}\`%0A"
-FINISH_MSG="${FINISH_MSG}📁 *AOSP ZIP:* \`${AOSP_ZIP_FILENAME}\`"
+
+if [ "$OS_TYPE" == "miui" ] || [ "$OS_TYPE" == "both" ]; then
+    FINISH_MSG="${FINISH_MSG}📁 *MIUI ZIP:* \`${ZIP_FILENAME}\`%0A"
+fi
+if [ "$OS_TYPE" == "aosp" ] || [ "$OS_TYPE" == "both" ]; then
+    FINISH_MSG="${FINISH_MSG}📁 *AOSP ZIP:* \`${AOSP_ZIP_FILENAME}\`"
+fi
 
 send_telegram_msg "$FINISH_MSG"
 
