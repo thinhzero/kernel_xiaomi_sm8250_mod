@@ -241,7 +241,7 @@ clang --version
 KSU_ZIP_STR=NoKernelSU
 if [ "$2" == "ksu" ]; then
     KSU_ENABLE=1
-    KSU_ZIP_STR=SukiSU
+    KSU_ZIP_STR=KittiSU
 else
     KSU_ENABLE=0
 fi
@@ -361,8 +361,17 @@ if [ $KSU_ENABLE -eq 1 ]; then
     scripts/config --file out/.config \
         -e KSU \
         -d KSU_SUSFS \
+        -d KSU_SUSFS_SUS_PATH \
+        -d KSU_SUSFS_SUS_MOUNT \
+        -d KSU_SUSFS_SUS_KSTAT \
+        -d KSU_SUSFS_SPOOF_UNAME \
+        -d KSU_SUSFS_ENABLE_LOG \
+        -d KSU_SUSFS_HIDE_KSU_SUSFS_SYMBOLS \
+        -d KSU_SUSFS_SPOOF_CMDLINE_OR_BOOTCONFIG \
+        -d KSU_SUSFS_OPEN_REDIRECT \
+        -d KSU_SUSFS_SUS_MAP \
         -e THREAD_INFO_IN_TASK \
-        -d KPM
+        -e KPM
 else
     scripts/config --file out/.config -d KSU
 fi
@@ -455,6 +464,15 @@ if [ $KSU_ENABLE -eq 1 ]; then
     scripts/config --file out/.config \
         -e KSU \
         -d KSU_SUSFS \
+        -d KSU_SUSFS_SUS_PATH \
+        -d KSU_SUSFS_SUS_MOUNT \
+        -d KSU_SUSFS_SUS_KSTAT \
+        -d KSU_SUSFS_SPOOF_UNAME \
+        -d KSU_SUSFS_ENABLE_LOG \
+        -d KSU_SUSFS_HIDE_KSU_SUSFS_SYMBOLS \
+        -d KSU_SUSFS_SPOOF_CMDLINE_OR_BOOTCONFIG \
+        -d KSU_SUSFS_OPEN_REDIRECT \
+        -d KSU_SUSFS_SUS_MAP \
         -e THREAD_INFO_IN_TASK \
         -e KPM
 else
@@ -476,7 +494,7 @@ find out/arch/arm64/boot/dts -name '*.dtb' -exec cat {} + > out/arch/arm64/boot/
 rm -rf anykernel/kernels/
 mkdir -p anykernel/kernels/
 
-# Patch for SukiSU KPM support. 
+# Patch for KittiSU KPM support. 
 if [ $KSU_ENABLE -eq 1 ]; then
     cd out/arch/arm64/boot/
     wget -q https://github.com/SukiSU-Ultra/SukiSU_KernelPatch_patch/releases/download/0.12.2/patch_linux

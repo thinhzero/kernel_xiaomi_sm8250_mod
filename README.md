@@ -22,8 +22,8 @@ Nếu bạn muốn tìm hiểu thêm về [vấn đề pin bị kẹt ở mức 
 ---
 
 ## Tính năng
-Kernel này hỗ trợ [SukiSU Ultra](https://github.com/SukiSU-Ultra/SukiSU-Ultra) (một nhánh tùy biến của KernelSU có hỗ trợ KPM) & [SUSFS](https://github.com/sidex15/susfs4ksu-module).
-Vui lòng tự cài đặt [Trình quản lý SukiSU Ultra](https://github.com/ShirkNeko/SukiSU-Ultra/releases) và flash module SUSFS nếu bạn cần.
+Kernel này hỗ trợ [KittiSU Ultra](https://github.com/SukiSU-Ultra/KittiSU-Ultra) (một nhánh tùy biến của KernelSU có hỗ trợ KPM) & [SUSFS](https://github.com/sidex15/susfs4ksu-module).
+Vui lòng tự cài đặt [Trình quản lý KittiSU Ultra](https://github.com/ShirkNeko/KittiSU-Ultra/releases) và flash module SUSFS nếu bạn cần.
 Phiên bản NoKernelSU (không có KSU) hỗ trợ dùng chung với Magisk và APatch.
 
 Các bản Kernel được build sẵn trong phần **Release** được biên dịch từ nhánh `android16-aptusitu`, và có thể hoạt động tốt trên các bản ROM MIUI/HyperOS gốc cũng như các ROM tùy biến dựa trên AOSP từ Android 11 đến 16.
