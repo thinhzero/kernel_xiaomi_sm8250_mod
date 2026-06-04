@@ -110,9 +110,7 @@ jobs:
           files=( ./release_artifacts/${BRANCH}_*.apk )
           if [ ${#files[@]} -eq 0 ]; then continue; fi
           
-          CAPTION="🔥 <b>Nóng hổi vừa thổi vừa ăn, có manager mới nhánh ${BRANCH} của KittiSU ${VERSION}</b>
-Chúng ta có các commit gần đây:
-${LOG}"
+          CAPTION="🔥 <b>Nóng hổi vừa thổi vừa ăn, có manager mới nhánh ${BRANCH} của KittiSU ${VERSION}</b>"$'\n'"Chúng ta có các commit gần đây:"$'\n'"${LOG}"
           # Escape quotes and newlines for JSON
           CAPTION_JSON=$(echo "$CAPTION" | sed 's/"/\\"/g' | sed ':a;N;$!ba;s/\n/\\n/g')
           
