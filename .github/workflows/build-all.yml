@@ -126,34 +126,45 @@ jobs:
           exit 0
         fi
         
-        shopt -s nullglob
-        files=( ./*.zip )
-        if [ ${#files[@]} -eq 0 ]; then
-          echo "No zip files to upload."
-          exit 0
-        fi
-        
-        CAPTION="🔥 <b>New super-zip kernel bundles available!</b>"
-        CAPTION_JSON=$(echo "$CAPTION" | sed 's/"/\\"/g' | sed ':a;N;$!ba;s/\n/\\n/g')
-        
-        for (( i=0; i<${#files[@]}; i+=10 )); do
-          chunk=("${files[@]:i:10}")
-          media_json="["
-          cmd=(curl -s -X POST "https://api.telegram.org/bot${TG_TOKEN}/sendMediaGroup" -F chat_id="${CHANNEL_TG_RELEASE_ID}")
+        DEVICES=(thyme psyche umi munch lmi cmi cas apollo alioth elish enuma dagu pipa)
+        for device in "${DEVICES[@]}"; do
+          shopt -s nullglob
+          files=()
           
-          for j in "${!chunk[@]}"; do
-            file="${chunk[$j]}"
-            if [ $j -eq 0 ]; then
-              media_json+="{\"type\":\"document\", \"media\":\"attach://file${j}\", \"caption\":\"${CAPTION_JSON}\", \"parse_mode\":\"HTML\"}"
-            else
-              media_json+=", {\"type\":\"document\", \"media\":\"attach://file${j}\"}"
+          for d in ./release_zips/zips-${device}-*; do
+            if [ -d "$d" ]; then
+              files+=( "$d"/*.zip )
             fi
-            cmd+=(-F "file${j}=@${file}")
           done
-          media_json+="]"
-          cmd+=(-F "media=${media_json}")
           
-          echo "Uploading chunk starting with ${chunk[0]}..."
-          "${cmd[@]}"
-          sleep 2
+          files+=( ./manager_apks/*.apk )
+          
+          if [ ${#files[@]} -eq 0 ]; then
+            continue
+          fi
+          
+          CAPTION="🔥 <b>New kernel build available for ${device}!</b>"
+          CAPTION_JSON=$(echo "$CAPTION" | sed 's/"/\\"/g' | sed ':a;N;$!ba;s/\n/\\n/g')
+          
+          for (( i=0; i<${#files[@]}; i+=10 )); do
+            chunk=("${files[@]:i:10}")
+            media_json="["
+            cmd=(curl -s -X POST "https://api.telegram.org/bot${TG_TOKEN}/sendMediaGroup" -F chat_id="${CHANNEL_TG_RELEASE_ID}")
+            
+            for j in "${!chunk[@]}"; do
+              file="${chunk[$j]}"
+              if [ $j -eq 0 ]; then
+                media_json+="{\"type\":\"document\", \"media\":\"attach://file${j}\", \"caption\":\"${CAPTION_JSON}\", \"parse_mode\":\"HTML\"}"
+              else
+                media_json+=", {\"type\":\"document\", \"media\":\"attach://file${j}\"}"
+              fi
+              cmd+=(-F "file${j}=@${file}")
+            done
+            media_json+="]"
+            cmd+=(-F "media=${media_json}")
+            
+            echo "Uploading chunk for ${device}..."
+            "${cmd[@]}"
+            sleep 3
+          done
         done
