@@ -2,6 +2,16 @@ name: Build All Devices Kernel (Matrix Parallel)
 
 on:
   workflow_dispatch:
+    inputs:
+      ksu_option:
+        description: 'Build variant (none, ksu, both)'
+        required: true
+        default: 'both'
+        type: choice
+        options:
+          - none
+          - ksu
+          - both
 
 jobs:
   build:
@@ -31,6 +41,7 @@ jobs:
         cd $GITHUB_WORKSPACE
 
     - name: Build kernel for ${{ matrix.device }} (No KSU)
+      if: ${{ github.event.inputs.ksu_option == 'none' || github.event.inputs.ksu_option == 'both' }}
       env:
         TG_TOKEN: ${{ secrets.TG_TOKEN }}
         TG_CHAT_ID: ${{ secrets.TG_CHAT_ID }}
@@ -38,6 +49,7 @@ jobs:
         bash build.sh ${{ matrix.device }}
 
     - name: Build kernel for ${{ matrix.device }} (With KSU)
+      if: ${{ github.event.inputs.ksu_option == 'ksu' || github.event.inputs.ksu_option == 'both' }}
       env:
         TG_TOKEN: ${{ secrets.TG_TOKEN }}
         TG_CHAT_ID: ${{ secrets.TG_CHAT_ID }}
@@ -66,14 +78,15 @@ jobs:
     - name: Get date and short SHA
       id: vars
       run: |
-        echo "date=$(date +'%Y%m%d')" >> $GITHUB_OUTPUT
+        echo "date=$(TZ='Asia/Ho_Chi_Minh' date +'%Y%m%d')" >> $GITHUB_OUTPUT
+        echo "display_date=$(TZ='Asia/Ho_Chi_Minh' date +'%d/%m/%Y')" >> $GITHUB_OUTPUT
         echo "sha=$(echo $GITHUB_SHA | cut -c1-7)" >> $GITHUB_OUTPUT
 
     - name: Create GitHub Release
       uses: softprops/action-gh-release@v2
       with:
         tag_name: build-${{ steps.vars.outputs.date }}-${{ steps.vars.outputs.sha }}
-        name: "Kernel Build ${{ steps.vars.outputs.date }}-${{ steps.vars.outputs.sha }}"
+        name: "Kernel 4.19 ${{ steps.vars.outputs.display_date }}"
         body: "Automated kernel build for commit ${{ github.sha }}"
         files: |
           ./release_zips/**/*.zip

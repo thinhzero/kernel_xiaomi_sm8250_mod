@@ -260,9 +260,9 @@ if [ $KSU_ENABLE -eq 1 ]; then
     echo "KSU is enabled"
     rm -rf KernelSU
     KSU_SETUP_SCRIPT=$(mktemp)
-    curl -LSs "https://raw.githubusercontent.com/terebiko/KittiSU/refs/heads/dev/kernel/setup.sh" \
+    curl -LSs "https://raw.githubusercontent.com/terebiko/KittiSU/main/kernel/setup.sh" \
         -o "$KSU_SETUP_SCRIPT"
-    bash "$KSU_SETUP_SCRIPT" dev
+    bash "$KSU_SETUP_SCRIPT" main
     rm -f "$KSU_SETUP_SCRIPT"
 
     # [FIX] Bypass lỗi TP hooks không tương thích Non-GKI (kernel 4.19)
