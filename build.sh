@@ -295,6 +295,12 @@ if [ $KSU_ENABLE -eq 1 ]; then
     sed -i 's/file_name->len/strlen(file_name)/g' KernelSU/kernel/manager/pkg_observer.c
     sed -i 's/file_name->name/file_name/g' KernelSU/kernel/manager/pkg_observer.c
     sed -i 's/\.handle_inode_event = ksu_handle_inode_event,/\.handle_event = ksu_handle_event,/g' KernelSU/kernel/manager/pkg_observer.c
+    
+    # [FIX] Replace missing copy_from_user_nofault in ksud_integration.c for kernel 4.19
+    echo "Patching KSU ksud_integration.c for copy_from_user_nofault..."
+    sed -i 's/copy_from_user_nofault/copy_from_user/g' KernelSU/kernel/runtime/ksud_integration.c 2>/dev/null || true
+    sed -i 's/copy_to_user_nofault/copy_to_user/g' KernelSU/kernel/runtime/ksud_integration.c 2>/dev/null || true
+    
     echo "Bypassed."
 else
     echo "KSU is disabled"
