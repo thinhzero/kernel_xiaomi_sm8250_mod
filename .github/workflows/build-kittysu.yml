@@ -1,0 +1,54 @@
+name: Build KittySU
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+
+    steps:
+    - name: Set up JDK 17
+      uses: actions/setup-java@v4
+      with:
+        java-version: '17'
+        distribution: 'temurin'
+
+    - name: Setup Android SDK
+      uses: android-actions/setup-android@v3
+
+    - name: Clone and Build KittySU
+      id: build
+      run: |
+        git clone https://github.com/terebiko/KittiSU.git kitty
+        cd kitty/manager
+        export ANDROID_HOME=$ANDROID_HOME
+        chmod +x ./gradlew
+        ./gradlew assembleRelease
+        
+        cd ..
+        # Get version and date
+        VERSION_NAME=$(git describe --tags --always)
+        echo "version=$VERSION_NAME" >> $GITHUB_OUTPUT
+        
+        DATE=$(TZ='Asia/Ho_Chi_Minh' date +'%d/%m/%Y')
+        echo "date=$DATE" >> $GITHUB_OUTPUT
+
+    - name: Upload Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: KittySU-Manager-${{ steps.build.outputs.version }}
+        path: kitty/manager/app/build/outputs/apk/release/*.apk
+
+    - name: Create GitHub Release
+      uses: softprops/action-gh-release@v2
+      with:
+        tag_name: kittysu-${{ steps.build.outputs.version }}
+        name: "KittySU ${{ steps.build.outputs.version }} (${{ steps.build.outputs.date }})"
+        body: "Automated KittySU build for version ${{ steps.build.outputs.version }}"
+        draft: false
+        prerelease: false
+        files: |
+          kitty/manager/app/build/outputs/apk/release/*.apk
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
