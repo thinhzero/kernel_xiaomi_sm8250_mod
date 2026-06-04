@@ -23,7 +23,7 @@ dts_source=arch/arm64/boot/dts/vendor/qcom
 
 # Kernel local version string (UTC+7, ~23 chars — well under 64-char limit)
 local_version_str="-perf"
-local_version_date_str="-thinhVN-$(TZ='Asia/Ho_Chi_Minh' date +%Y%m%d)-$(TZ='Asia/Ho_Chi_Minh' date +%H%M)-perf++"
+local_version_date_str="-thinhVN-$(TZ='Asia/Ho_Chi_Minh' date +%Y%m%d)-$(TZ='Asia/Ho_Chi_Minh' date +%H%M)-${GIT_COMMIT_ID}-perf++"
 
 # --- CẤU HÌNH TELEGRAM BOT TỪ .ENV ---
 ENV_FILE=".env"
@@ -437,7 +437,7 @@ FORMATTED_TIME=$(printf "%02d:%02d:%02d" $((ELAPSED_SECS/3600)) $(((ELAPSED_SECS
 # ── Packaging ─────────────────────────────────────────────────────────────────
 cd anykernel
 
-ZIP_FILENAME=Kernel_MIUI_${TARGET_DEVICE}_${KSU_ZIP_STR}_$(TZ='Asia/Ho_Chi_Minh' date +'%Y%m%d_%H%M%S')_anykernel3_${GIT_COMMIT_ID}.zip
+ZIP_FILENAME=Kernel_MIUI_${TARGET_DEVICE}_${KSU_ZIP_STR}_${GIT_COMMIT_ID}_$(TZ='Asia/Ho_Chi_Minh' date +'%Y%m%d_%H%M%S')_anykernel3.zip
 
 zip -r9 "$ZIP_FILENAME" . \
     -x "*.git*" \
@@ -513,7 +513,7 @@ echo "Build for AOSP finished."
 # ── Packaging AOSP ────────────────────────────────────────────────────────────
 cd anykernel
 
-AOSP_ZIP_FILENAME=Kernel_AOSP_${TARGET_DEVICE}_${KSU_ZIP_STR}_$(TZ='Asia/Ho_Chi_Minh' date +'%Y%m%d_%H%M%S')_anykernel3_${GIT_COMMIT_ID}.zip
+AOSP_ZIP_FILENAME=Kernel_AOSP_${TARGET_DEVICE}_${KSU_ZIP_STR}_${GIT_COMMIT_ID}_$(TZ='Asia/Ho_Chi_Minh' date +'%Y%m%d_%H%M%S')_anykernel3.zip
 
 zip -r9 "$AOSP_ZIP_FILENAME" . \
     -x "*.git*" \
