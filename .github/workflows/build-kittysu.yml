@@ -88,5 +88,46 @@ jobs:
         draft: false
         prerelease: false
         files: ./release_artifacts/*.apk
+
+    - name: Upload to Telegram
       env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        TG_TOKEN: ${{ secrets.TG_TOKEN }}
+        CHANNEL_TG_RELEASE_ID: ${{ secrets.CHANNEL_TG_RELEASE_ID }}
+      run: |
+        if [ -z "$TG_TOKEN" ] || [ -z "$CHANNEL_TG_RELEASE_ID" ]; then
+          echo "Telegram credentials not provided. Skipping upload."
+          exit 0
+        fi
+        
+        VERSION="${{ steps.vars.outputs.version }}"
+        
+        for BRANCH in main managerfix; do
+          rm -rf kitty_$BRANCH
+          git clone --depth 3 -b $BRANCH https://github.com/terebiko/KittiSU.git kitty_$BRANCH || continue
+          LOG=$(cd kitty_$BRANCH && git log -2 --pretty=format:"- <code>%h</code> %s")
+          
+          shopt -s nullglob
+          files=( ./release_artifacts/${BRANCH}_*.apk )
+          if [ ${#files[@]} -eq 0 ]; then continue; fi
+          
+          CAPTION="🔥 <b>Nóng hổi vừa thổi vừa ăn, có manager mới nhánh ${BRANCH} của KittiSU ${VERSION}</b>
+Chúng ta có các commit gần đây:
+${LOG}"
+          # Escape quotes and newlines for JSON
+          CAPTION_JSON=$(echo "$CAPTION" | sed 's/"/\\"/g' | sed ':a;N;$!ba;s/\n/\\n/g')
+          
+          media_json="["
+          cmd=(curl -s -X POST "https://api.telegram.org/bot${TG_TOKEN}/sendMediaGroup" -F chat_id="${CHANNEL_TG_RELEASE_ID}")
+          for i in "${!files[@]}"; do
+            file="${files[$i]}"
+            if [ $i -eq 0 ]; then
+              media_json+="{\"type\":\"document\", \"media\":\"attach://file${i}\", \"caption\":\"${CAPTION_JSON}\", \"parse_mode\":\"HTML\"}"
+            else
+              media_json+=", {\"type\":\"document\", \"media\":\"attach://file${i}\"}"
+            fi
+            cmd+=(-F "file${i}=@${file}")
+          done
+          media_json+="]"
+          cmd+=(-F "media=${media_json}")
+          "${cmd[@]}"
+        done

@@ -122,13 +122,39 @@ jobs:
         TG_TOKEN: ${{ secrets.TG_TOKEN }}
         CHANNEL_TG_RELEASE_ID: ${{ secrets.CHANNEL_TG_RELEASE_ID }}
       run: |
-        if [ -n "$TG_TOKEN" ] && [ -n "$CHANNEL_TG_RELEASE_ID" ]; then
-          for zip_file in ./*.zip; do
-            if [ -f "$zip_file" ]; then
-              echo "Uploading $zip_file to Telegram..."
-              curl -s -F chat_id="$CHANNEL_TG_RELEASE_ID" -F document=@"$zip_file" -F caption="New bundle available: $zip_file" https://api.telegram.org/bot${TG_TOKEN}/sendDocument
-            fi
-          done
-        else
+        if [ -z "$TG_TOKEN" ] || [ -z "$CHANNEL_TG_RELEASE_ID" ]; then
           echo "Telegram credentials not provided. Skipping upload."
+          exit 0
         fi
+        
+        shopt -s nullglob
+        files=( ./*.zip )
+        if [ ${#files[@]} -eq 0 ]; then
+          echo "No zip files to upload."
+          exit 0
+        fi
+        
+        CAPTION="🔥 <b>New super-zip kernel bundles available!</b>"
+        CAPTION_JSON=$(echo "$CAPTION" | sed 's/"/\\"/g' | sed ':a;N;$!ba;s/\n/\\n/g')
+        
+        for (( i=0; i<${#files[@]}; i+=10 )); do
+          chunk=("${files[@]:i:10}")
+          media_json="["
+          cmd=(curl -s -X POST "https://api.telegram.org/bot${TG_TOKEN}/sendMediaGroup" -F chat_id="${CHANNEL_TG_RELEASE_ID}")
+          
+          for j in "${!chunk[@]}"; do
+            file="${chunk[$j]}"
+            if [ $j -eq 0 ]; then
+              media_json+="{\"type\":\"document\", \"media\":\"attach://file${j}\", \"caption\":\"${CAPTION_JSON}\", \"parse_mode\":\"HTML\"}"
+            else
+              media_json+=", {\"type\":\"document\", \"media\":\"attach://file${j}\"}"
+            fi
+            cmd+=(-F "file${j}=@${file}")
+          done
+          media_json+="]"
+          cmd+=(-F "media=${media_json}")
+          
+          echo "Uploading chunk starting with ${chunk[0]}..."
+          "${cmd[@]}"
+          sleep 2
+        done
