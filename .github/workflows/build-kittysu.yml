@@ -6,6 +6,10 @@ on:
 jobs:
   build:
     runs-on: ubuntu-22.04
+    strategy:
+      fail-fast: false
+      matrix:
+        branch: [main, dev]
 
     steps:
     - name: Set up JDK 17
@@ -17,38 +21,72 @@ jobs:
     - name: Setup Android SDK
       uses: android-actions/setup-android@v3
 
-    - name: Clone and Build KittySU
+    - name: Clone and Build KittySU (${{ matrix.branch }})
       id: build
+      continue-on-error: true
       run: |
-        git clone https://github.com/terebiko/KittiSU.git kitty
+        git clone -b ${{ matrix.branch }} https://github.com/terebiko/KittiSU.git kitty
         cd kitty/manager
         export ANDROID_HOME=$ANDROID_HOME
         chmod +x ./gradlew
         ./gradlew assembleRelease
         
         cd ..
-        # Get version and date
         VERSION_NAME=$(git describe --tags --always)
-        echo "version=$VERSION_NAME" >> $GITHUB_OUTPUT
+        echo "$VERSION_NAME" > version.txt
         
-        DATE=$(TZ='Asia/Ho_Chi_Minh' date +'%d/%m/%Y')
-        echo "date=$DATE" >> $GITHUB_OUTPUT
+        cd ..
+        mkdir -p output_apks
+        for file in kitty/manager/app/build/outputs/apk/release/*.apk; do
+          if [ -f "$file" ]; then
+            filename=$(basename "$file")
+            cp "$file" "output_apks/${{ matrix.branch }}_${filename}"
+          fi
+        done
+        # Lưu version.txt để job release dùng
+        cp kitty/version.txt output_apks/version_${{ matrix.branch }}.txt
 
-    - name: Upload Artifact
+    - name: Upload Artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: KittySU-Manager-${{ steps.build.outputs.version }}
-        path: kitty/manager/app/build/outputs/apk/release/*.apk
+        name: KittySU-APKs-${{ matrix.branch }}
+        path: output_apks/*
+
+  release:
+    runs-on: ubuntu-22.04
+    needs: build
+    steps:
+    - name: Download all artifacts
+      uses: actions/download-artifact@v4
+      with:
+        path: ./release_artifacts
+        pattern: KittySU-APKs-*
+        merge-multiple: true
+
+    - name: Get Date and Version
+      id: vars
+      run: |
+        DATE=$(TZ='Asia/Ho_Chi_Minh' date +'%d/%m/%Y')
+        echo "date=$DATE" >> $GITHUB_OUTPUT
+        
+        # Lấy version từ nhánh main (nếu có), nếu không lấy từ nhánh dev
+        if [ -f "./release_artifacts/version_main.txt" ]; then
+          VERSION=$(cat ./release_artifacts/version_main.txt)
+        elif [ -f "./release_artifacts/version_dev.txt" ]; then
+          VERSION=$(cat ./release_artifacts/version_dev.txt)
+        else
+          VERSION=$(date +'%Y%m%d_%H%M')
+        fi
+        echo "version=$VERSION" >> $GITHUB_OUTPUT
 
     - name: Create GitHub Release
       uses: softprops/action-gh-release@v2
       with:
-        tag_name: kittysu-${{ steps.build.outputs.version }}
-        name: "KittySU ${{ steps.build.outputs.version }} (${{ steps.build.outputs.date }})"
-        body: "Automated KittySU build for version ${{ steps.build.outputs.version }}"
+        tag_name: kittysu-${{ steps.vars.outputs.version }}
+        name: "KittySU ${{ steps.vars.outputs.version }} (${{ steps.vars.outputs.date }})"
+        body: "Automated KittySU build for main and dev branches."
         draft: false
         prerelease: false
-        files: |
-          kitty/manager/app/build/outputs/apk/release/*.apk
+        files: ./release_artifacts/*.apk
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
