@@ -94,7 +94,7 @@ jobs:
           out/arch/arm64/boot/dtb
 
     - name: Get Date
-      id: vars
+      id: date_vars
       run: |
         echo "date=$(TZ='Asia/Ho_Chi_Minh' date +'%Y%m%d')" >> $GITHUB_OUTPUT
         echo "display_date=$(TZ='Asia/Ho_Chi_Minh' date +'%d/%m/%Y')" >> $GITHUB_OUTPUT
@@ -102,8 +102,8 @@ jobs:
     - name: Upload to Release
       uses: softprops/action-gh-release@v2
       with:
-        tag_name: build-${{ github.event.inputs.device }}-${{ steps.vars.outputs.date }}-${{ github.run_id }}
-        name: "Kernel 4.19 ${{ steps.vars.outputs.display_date }}"
+        tag_name: build-${{ github.event.inputs.device }}-${{ steps.date_vars.outputs.date }}-${{ github.run_id }}
+        name: "Kernel 4.19 ${{ steps.date_vars.outputs.display_date }}"
         draft: false
         prerelease: false
         files: |
