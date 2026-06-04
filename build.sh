@@ -432,6 +432,7 @@ scripts/config --file out/.config \
     -e MI_RECLAIM \
     -e RTMM
 
+make "${MAKE_ARGS[@]}" olddefconfig
 make "${MAKE_ARGS[@]}" -j"$(nproc)"
 
 if [ -f "out/arch/arm64/boot/Image" ]; then
@@ -511,6 +512,8 @@ if [ $KSU_ENABLE -eq 1 ]; then
 else
     scripts/config --file out/.config -d KSU
 fi
+
+make "${MAKE_ARGS[@]}" olddefconfig
 
 make "${MAKE_ARGS[@]}" -j"$(nproc)"
 
